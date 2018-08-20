@@ -11,9 +11,11 @@ const url = require("url");
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-function createWindow() {
+function createWindows() {
+  // Get width and height of primary screen
+  const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
   // Create the browser window.
-  mainWindow = new BrowserWindow({ width: 800, height: 600 });
+  mainWindow = new BrowserWindow({ width, height });
 
   // and load the index.html of the app.
   const startUrl =
@@ -25,7 +27,7 @@ function createWindow() {
     });
   mainWindow.loadURL(startUrl);
 
-  // Open the DevTools.
+  // Open the DevTools as displays object is dumped into console.
   mainWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
@@ -35,12 +37,52 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null;
   });
+
+  // Create secondary window
+  createSecondaryWindow();
+}
+
+function createSecondaryWindow() {
+  var electronScreen = electron.screen;
+  // Get all connected monitors
+  var displays = electronScreen.getAllDisplays();
+  var externalDisplay = null;
+  for (var i in displays) {
+    if (displays[i].bounds.x != 0 || displays[i].bounds.y != 0) {
+      // Return first external display found
+      externalDisplay = displays[i];
+      break;
+    }
+  }
+
+  // Create secondary window on external screen if found
+  if (externalDisplay) {
+    console.log(
+      "An external screen has been found, loading google.com on this screen..."
+    );
+    mainWindow = new BrowserWindow({
+      x: externalDisplay.bounds.x + 50,
+      y: externalDisplay.bounds.y + 50
+    });
+  } else {
+    console.log(
+      "No external screen has been found, loading google.com on the primary screen instead..."
+    );
+    // If no external screen has been found, load it on the primary
+    // Get width and height of primary screen
+    const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
+    // Create the browser window.
+    mainWindow = new BrowserWindow({ width, height });
+  }
+
+  // Load an example site
+  mainWindow.loadURL("https://google.com");
 }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on("ready", createWindow);
+app.on("ready", createWindows);
 
 // Quit when all windows are closed.
 app.on("window-all-closed", function() {
@@ -55,7 +97,7 @@ app.on("activate", function() {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow();
+    createWindows();
   }
 });
 
