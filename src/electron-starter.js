@@ -60,9 +60,12 @@ function createSecondaryWindow () {
     console.log(
       'An external screen has been found, loading URL on this screen...'
     )
-    mainWindow = new BrowserWindow({
-      x: externalDisplay.bounds.x + 50,
-      y: externalDisplay.bounds.y + 50,
+    const { width, height } = externalDisplay.workAreaSize
+    secondaryWindow = new BrowserWindow({
+      width,
+      height,
+      x: externalDisplay.bounds.x,
+      y: externalDisplay.bounds.y,
       webPreferences: {
         nodeIntegration: false,
         plugins: true
@@ -76,7 +79,7 @@ function createSecondaryWindow () {
     // Get width and height of primary screen
     const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize
     // Create the browser window.
-    mainWindow = new BrowserWindow({
+    secondaryWindow = new BrowserWindow({
       width,
       height,
       webPreferences: {
@@ -87,7 +90,15 @@ function createSecondaryWindow () {
   }
 
   // Load an example site
-  mainWindow.loadURL('https://google.com')
+  secondaryWindow.loadURL('https://google.com')
+
+  // Emitted when the window is closed.
+  secondaryWindow.on('closed', function () {
+    // Dereference the window object, usually you would store windows
+    // in an array if your app supports multi windows, this is the time
+    // when you should delete the corresponding element.
+    secondaryWindow = null
+  })
 }
 
 // This method will be called when Electron has finished
